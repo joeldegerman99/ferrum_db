@@ -1,5 +1,3 @@
 [workspace]
 
-members = [ "btree",
-  "engine"
-]
+members = ["btree", "engine"]
