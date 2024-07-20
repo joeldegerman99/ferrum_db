@@ -4,14 +4,13 @@ use std::{
     rc::Rc,
 };
 
-const MAX: usize = 3;
-
+const MAX: usize = 4;
 
 /// InternalNode holds a pointer to another node
-/// 
+///
 /// LeafNode holds the data for a specific key and a linked list structure of the next leaf node (From left to right)
 #[derive(Debug)]
-enum NodeType {
+pub enum NodeType {
     InternalNode {
         keys: Vec<u32>,
         children: Vec<Rc<Node>>,
@@ -24,7 +23,7 @@ enum NodeType {
 }
 
 #[derive(Debug)]
-struct Node {
+pub struct Node {
     node_type: NodeType,
 }
 
@@ -34,7 +33,7 @@ struct Node {
 ///
 /// The root has at least two children and atleast one search key.
 #[derive(Debug)]
-struct BTree {
+pub struct BTree {
     root: Rc<Node>,
 }
 
@@ -43,7 +42,7 @@ impl BTree {
         todo!()
     }
 
-    fn search(&self, key: u32) -> Option<u32> {
+    pub fn search(&self, key: u32) -> Option<u32> {
         let root = self.root.clone();
         BTree::search_node(&root, key)
     }
@@ -51,16 +50,10 @@ impl BTree {
     fn search_node(node: &Rc<Node>, key: u32) -> Option<u32> {
         match &node.node_type {
             NodeType::InternalNode { keys, children } => {
-                println!("Keys: {:?}", keys);
                 let mut child_index = keys.len();
-                println!("Child index: {}", child_index);
                 for (i, node_key) in keys.iter().enumerate() {
-                    println!("Node key: {}", node_key);
-                    println!("Key: {}", key);
-
                     if &key < node_key {
                         child_index = i;
-                        println!("New child index (lt): {}", child_index);
                         break;
                     }
                 }
@@ -101,33 +94,49 @@ mod tests {
 
     #[test]
     fn test_multiple_leaf_search() {
-        let second = Rc::new(Node {
+        let left = Rc::new(Node {
             node_type: NodeType::LeafNode {
-                keys: vec![3],
-                data: vec![1338],
+                keys: vec![10, 15, 20, 28],
+                data: vec![100, 150, 200, 280],
                 next: None,
             },
         });
-        let first = Rc::new(Node {
+
+        let left_middle = Rc::new(Node {
             node_type: NodeType::LeafNode {
-                keys: vec![1],
-                data: vec![1337],
-                next: Some(Rc::clone(&second)),
+                keys: vec![30, 35, 45, 48],
+                data: vec![300, 350, 450, 480],
+                next: Some(Rc::clone(&left)),
+            },
+        });
+
+        let right_middle = Rc::new(Node {
+            node_type: NodeType::LeafNode {
+                keys: vec![50, 58, 65, 68],
+                data: vec![500, 580, 650, 680],
+                next: Some(Rc::clone(&left_middle)),
+            },
+        });
+
+        let right = Rc::new(Node {
+            node_type: NodeType::LeafNode {
+                keys: vec![70, 85, 90, 92],
+                data: vec![700, 850, 900, 920],
+                next: Some(Rc::clone(&right_middle)),
             },
         });
 
         let tree = BTree {
             root: Rc::new(Node {
                 node_type: NodeType::InternalNode {
-                    keys: vec![2],
-                    children: vec![first, second],
+                    keys: vec![30, 50, 70],
+                    children: vec![left, left_middle, right_middle, right],
                 },
             }),
         };
-        println!("Tree: {tree:?}");
 
-        let val = tree.search(3);
+        let val = tree.search(92);
 
-        assert_eq!(val, Some(1338));
+        assert_eq!(val, Some(920));
     }
 }
